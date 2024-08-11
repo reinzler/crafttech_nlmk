@@ -42,7 +42,7 @@ class OffboardControl(Node):
 
         # Create a timer to publish control commands
         self.timer = self.create_timer(0.1, self.timer_callback)
-        self.velocity_vx,  self.velocity_vy = 0.0, 0.0
+        self.velocity_vx,  self.velocity_vy, self.velocity_vz = 0.0, 0.0, 0.0
         self.ready_flag = False
 
     def vehicle_status_callback(self, vehicle_status):
@@ -73,14 +73,14 @@ class OffboardControl(Node):
         self.offboard_control_mode_publisher.publish(msg)
         self.get_logger().info(f"{Fore.YELLOW}Publishing Offboard Control Mode{Fore.RESET}")
 
-    def publish_velocity_setpoint(self, vx: float, vy: float):
+    def publish_velocity_setpoint(self, vx: float, vy: float, vz: float):
         """Publish the trajectory setpoint for velocity control."""
         msg = TrajectorySetpoint()
         msg.velocity = [vx, vy, 0.0]
         msg.yaw = 0.0
         msg.timestamp = int(self.get_clock().now().nanoseconds / 1000)
         self.trajectory_setpoint_publisher.publish(msg)
-        self.get_logger().info(f"{Fore.CYAN}Publishing velocity setpoints {[vx, vy, 0.0]}{Fore.RESET}")
+        self.get_logger().info(f"{Fore.CYAN}Publishing velocity setpoints {[vx, vy, vz]}{Fore.RESET}")
 
     def publish_vehicle_command(self, command, **params) -> None:
         """Publish a vehicle command."""
@@ -113,14 +113,14 @@ class OffboardControl(Node):
 
         if self.ready_flag:
             # pass
-            self.publish_velocity_setpoint(self.velocity_vx, self.velocity_vy)  # Adjust velocity as needed
+            self.publish_velocity_setpoint(self.velocity_vx, self.velocity_vy, self.velocity_vz)  # Adjust velocity as needed
 
         if self.offboard_setpoint_counter < 6:
             self.offboard_setpoint_counter += 1
 
     def vehicle_vel_callback(self, msg):
         if self.ready_flag:
-            self.velocity_vx, self.velocity_vy = msg.data[0], msg.data[1]
+            self.velocity_vx, self.velocity_vy, self.velocity_vz = msg.data[0], msg.data[1], msg.data[2]
             # self.publish_velocity_setpoint(msg.data[0], msg.data[1])
 
 
