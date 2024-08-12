@@ -28,12 +28,6 @@
       <pose>0 0 0 0 0 0</pose>
     </frame>
 
-     <!-- Include ArUco marker model -->
-    <include>
-      <uri>model://aruco</uri>
-      <pose>3 3 0.1 1.5708 0 0</pose>
-    </include>
-
     <!-- A global light source -->
     <include>
       <uri>model://sun</uri>
@@ -44,10 +38,16 @@
       <uri>model://ground_plane</uri>
     </include>
 
-    <include>
-      <uri>model://r1_rover</uri>
-      <pose>0 0 0 0 0 0</pose>
-    </include>
+    <!-- Include ArUco marker model -->
+<!--    <include>-->
+<!--      <uri>model://aruco</uri>-->
+<!--      <pose>3 3 0 1.5708 0 0</pose>-->
+<!--    </include>-->
+
+<!--     <include>-->
+<!--      <uri>model://r1_rover</uri>-->
+<!--      <pose>0 0 0 0 0 0</pose>-->
+<!--    </include>-->
 
   </world>
 </sdf>

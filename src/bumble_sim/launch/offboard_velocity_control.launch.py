@@ -43,11 +43,30 @@ def generate_launch_description():
         output='screen'
     )
 
+    spawn_aruco = Node(
+        package='gazebo_ros',
+        executable='spawn_entity.py',
+        arguments=['-entity', 'aruco', '-file', os.path.join(package_dir, 'models', 'aruco', 'model.sdf'),
+                   '-x', '3', '-y', '3', '-z', '2', '-Y', '1.5708'],
+        output='screen'
+    )
+
+    spawn_rover = Node(
+        package='gazebo_ros',
+        executable='spawn_entity.py',
+        arguments=['-entity', 'r1_rover', '-file',
+                   os.path.join(package_dir, 'models', 'r1_rover', 'r1_rover.sdf'), '-x', '0', '-y', '0',
+                   '-z', '0'],
+        output='screen'
+    )
+
     # Define the nodes to be launched
     return LaunchDescription([
         set_gazebo_model_path,
         set_ld_library_path,
         gazebo_node,
+        spawn_aruco,
+        spawn_rover,
 
         Node(
             package='bumble_sim',
