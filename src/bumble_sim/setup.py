@@ -15,21 +15,17 @@ setup(
         (os.path.join('share', package_name, 'launch'), glob(os.path.join('launch', '*.launch.py'))),
         (os.path.join('share', package_name, 'worlds'), glob(os.path.join('worlds', '*.world'))),
 
-        # Устанавливаем SDF модели
-        ('share/' + package_name + '/models/r1_rover/meshes',
-         glob('models/r1_rover/meshes/*.STL')),
-        ('share/' + package_name + '/models/r1_rover',
-         ['models/r1_rover/model.config', 'models/r1_rover/r1_rover.sdf',
-          'models/r1_rover/r1_rover.sdf.jinja', 'models/r1_rover/r1_rover.sdf.last_generated']),
-        ('share/' + package_name + '/models',
-         glob('models/*.sdf')),
-        ('share/' + package_name + '/models/r1_rover',
-         glob('models/r1_rover/*.sdf')),
-        ('share/' + package_name + '/launch',
-         glob('launch/*.launch.py')),
+        # Включение всех файлов внутри папки models и её подкаталогов
+        ('share/' + package_name + '/models/aruco/materials/scripts', glob('models/aruco/materials/scripts/*')),
+        ('share/' + package_name + '/models/aruco/materials/textures', glob('models/aruco/materials/textures/*')),
+        ('share/' + package_name + '/models/aruco', ['models/aruco/model.config', 'models/aruco/model.sdf']),
+        ('share/' + package_name + '/models/ground_plane',
+         ['models/ground_plane/model.config', 'models/ground_plane/model.sdf']),
+        ('share/' + package_name + '/models/r1_rover/meshes', glob('models/r1_rover/meshes/*.STL')),
+        ('share/' + package_name + '/models/r1_rover', ['models/r1_rover/model.config', 'models/r1_rover/r1_rover.sdf']),
+        ('share/' + package_name + '/models/sun', ['models/sun/model.config', 'models/sun/model.sdf']),
 
-        # Offboard control
-        # ('lib/' + package_name, [package_name + '/offboard_control/' + 'offboard_sim_control.py']),
+        # Py sctripts
         ('lib/' + package_name, glob(package_name + '/*.py')),
     ],
     install_requires=['setuptools'],

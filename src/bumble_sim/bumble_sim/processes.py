@@ -1,4 +1,3 @@
-
 #!/usr/bin/env python3
 
 # Import the subprocess and time modules
@@ -11,7 +10,8 @@ commands = [
     "MicroXRCEAgent udp4 -p 8888",
 
     # Run the PX4 SITL simulation
-    "cd ~/PX4-Autopilot && make px4_sitl gazebo-classic_r1_rover",
+    # "cd ~/PX4-Autopilot && make px4_sitl gazebo-classic_r1_rover",
+    "cd ~/PX4-Autopilot && make px4_sitl_default none",
 
     # Run QGroundControl
     "QGroundControl.AppImage"
@@ -26,10 +26,3 @@ for command in commands:
     # Pause between each command
     time.sleep(1)
 
-# Откройте первый терминатор
-# subprocess.run(["terminator", "-x", "bash", "-c", commands[0] + "; exec bash"])
-#
-# for i in range(1, len(commands)):
-#     # Каждую следующую команду запускаем в новом сплите
-#     subprocess.run(["terminator", "--new-tab", "-x", "bash", "-c", commands[i] + "; exec bash"])
-#     time.sleep(1)

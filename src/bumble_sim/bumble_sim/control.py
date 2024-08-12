@@ -58,7 +58,7 @@ def main():
 
     # Create publishers
     pub = node.create_publisher(geometry_msgs.msg.Twist, '/cmd_vel', qos_profile)
-    teleop_speed = node.create_publisher(std_msgs.Float32MultiArray, '/rover_velocity', qos_profile)
+    teleop_speed = node.create_publisher(std_msgs.msg.Float32MultiArray, '/rover_velocity', qos_profile)
     speed = 0.5  # Linear speed
     turn = 1.0   # Angular speed
 
@@ -84,7 +84,7 @@ def main():
             twist.angular.z = th * turn
             pub.publish(twist)
 
-            velocity = std_msgs.Float32MultiArray()
+            velocity = std_msgs.msg.Float32MultiArray()
             velocity.data = [speed, 0.0]
             teleop_speed.publish(velocity)
 
@@ -98,7 +98,7 @@ def main():
         twist.angular.z = 0.0
         pub.publish(twist)
 
-        velocity = std_msgs.Float32MultiArray()
+        velocity = std_msgs.msg.Float32MultiArray()
         velocity.data = [0.0, 0.0]
         teleop_speed.publish(velocity)
 
