@@ -43,7 +43,7 @@ class OffboardControl(Node):
 
         # Create a timer to publish control commands
         self.timer = self.create_timer(0.1, self.timer_callback)
-        self.velocity_vx,  self.velocity_vy, self.velocity_vz, self.angular_z = 0.0, 0.0, 0.0, np.pi/2
+        self.velocity_vx,  self.velocity_vy, self.velocity_vz, self.angular_z = 0.0, 0.0, 0.0, 0.0
         self.ready_flag = False
 
     def vehicle_status_callback(self, vehicle_status):

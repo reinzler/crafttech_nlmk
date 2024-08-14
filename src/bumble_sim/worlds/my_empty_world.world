@@ -1,6 +1,27 @@
 <?xml version="1.0" ?>
 <sdf version="1.5">
   <world name="default">
+    <!-- A global light source -->
+    <include>
+      <uri>model://sun</uri>
+    </include>
+    <!-- A ground plane -->
+    <include>
+      <uri>model://ground_plane</uri>
+    </include>
+
+    <include>
+      <uri>model://aruco</uri>
+      <name>marker_1</name>
+        <pose>3 3 3 1.5708 0 0</pose>
+    </include>
+
+    <include>
+      <uri>model://aruco</uri>
+      <name>marker_2</name>
+        <pose>10 10 1 1.5708 0 0</pose>
+    </include>
+
     <physics name='default_physics' default='0' type='ode'>
       <gravity>0 0 -9.8066</gravity>
       <ode>
@@ -22,32 +43,5 @@
       <real_time_update_rate>250</real_time_update_rate>
       <magnetic_field>6.0e-6 2.3e-5 -4.2e-5</magnetic_field>
     </physics>
-
-     <!-- Define the world frame -->
-    <frame name="world">
-      <pose>0 0 0 0 0 0</pose>
-    </frame>
-
-    <!-- A global light source -->
-    <include>
-      <uri>model://sun</uri>
-    </include>
-
-    <!-- A ground plane -->
-    <include>
-      <uri>model://ground_plane</uri>
-    </include>
-
-    <!-- Include ArUco marker model -->
-<!--    <include>-->
-<!--      <uri>model://aruco</uri>-->
-<!--      <pose>3 3 0 1.5708 0 0</pose>-->
-<!--    </include>-->
-
-<!--     <include>-->
-<!--      <uri>model://r1_rover</uri>-->
-<!--      <pose>0 0 0 0 0 0</pose>-->
-<!--    </include>-->
-
   </world>
 </sdf>

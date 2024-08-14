@@ -48,12 +48,12 @@ def main():
 
     node = rclpy.create_node('teleop_twist_keyboard')
 
-    # Define QoS profiles
+    # Configure QoS profile for publishing and subscribing
     qos_profile = QoSProfile(
         reliability=ReliabilityPolicy.BEST_EFFORT,
-        durability=DurabilityPolicy.VOLATILE,
+        durability=DurabilityPolicy.TRANSIENT_LOCAL,
         history=HistoryPolicy.KEEP_LAST,
-        depth=10
+        depth=1
     )
 
     # Create publishers
@@ -85,7 +85,7 @@ def main():
             pub.publish(twist)
 
             velocity = std_msgs.msg.Float32MultiArray()
-            velocity.data = [speed, 0.0]
+            velocity.data = [x * speed, 0.0, 0.0, th * turn]
             teleop_speed.publish(velocity)
 
     except Exception as e:
@@ -99,7 +99,7 @@ def main():
         pub.publish(twist)
 
         velocity = std_msgs.msg.Float32MultiArray()
-        velocity.data = [0.0, 0.0]
+        velocity.data = [x * speed, 0.0, 0.0, th * turn]
         teleop_speed.publish(velocity)
 
         restoreTerminalSettings(settings)

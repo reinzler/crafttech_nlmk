@@ -21,8 +21,10 @@ setup(
         ('share/' + package_name + '/models/aruco', ['models/aruco/model.config', 'models/aruco/model.sdf']),
         ('share/' + package_name + '/models/ground_plane',
          ['models/ground_plane/model.config', 'models/ground_plane/model.sdf']),
-        ('share/' + package_name + '/models/r1_rover/meshes', glob('models/r1_rover/meshes/*.STL')),
-        ('share/' + package_name + '/models/r1_rover', ['models/r1_rover/model.config', 'models/r1_rover/r1_rover.sdf']),
+
+        # ('share/' + package_name + '/models/r1_rover/meshes', glob('models/r1_rover/meshes/*.STL')),
+        # ('share/' + package_name + '/models/r1_rover', ['models/r1_rover/model.config', 'models/r1_rover/r1_rover.sdf']),
+
         ('share/' + package_name + '/models/sun', ['models/sun/model.config', 'models/sun/model.sdf']),
 
         # Py sctripts
