@@ -85,13 +85,13 @@ def generate_launch_description():
             prefix='gnome-terminal --',
         ),
 
-        Node(
-            package='bumble_sim',
-            namespace='rover_sim',
-            executable='control',
-            name='control',
-            prefix='gnome-terminal --',
-        ),
+        # Node(
+        #     package='bumble_sim',
+        #     namespace='rover_sim',
+        #     executable='control',
+        #     name='control',
+        #     prefix='gnome-terminal --',
+        # ),
 
         TimerAction(
             period=15.0,
