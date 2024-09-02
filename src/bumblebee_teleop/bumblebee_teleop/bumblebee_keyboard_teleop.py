@@ -33,6 +33,27 @@ e/c : increase/decrease only angular speed by 10%
 CTRL-C to quit
 """
 
+# moveBindings = {
+# 		'i':(1,0,0,0),
+# 		'o':(1,0,0,-1),
+# 		'j':(0,0,0,1),
+# 		'l':(0,0,0,-1),
+# 		'u':(1,0,0,1),
+# 		',':(-1,0,0,0),
+# 		'.':(-1,0,0,1),
+# 		'm':(-1,0,0,-1),
+# 		'O':(1,-1,0,0),
+# 		'I':(1,0,0,0),
+# 		'J':(0,1,0,0),
+# 		'L':(0,-1,0,0),
+# 		'U':(1,1,0,0),
+# 		'<':(-1,0,0,0),
+# 		'>':(-1,-1,0,0),
+# 		'M':(-1,1,0,0),
+# 		't':(0,0,1,0),
+# 		'b':(0,0,-1,0),
+# 	       }
+
 moveBindings = {
 		'i':(1,0,0,0),
 		'o':(1,0,0,-1),
@@ -127,22 +148,24 @@ def main(args=None):
 				if (key == '\x03'):
 					break
 
-			# twist = Twist()
 			twist = TwistStamped()
-			twist.linear.x = x*speed
-			twist.linear.y = y*speed
-			twist.linear.z = z*speed
-			twist.angular.x = 0.0; twist.angular.y = 0.0; twist.angular.z = th*turn
+			twist.twist.linear.x = x*speed # try
+			twist.twist.linear.y = y*speed
+			twist.twist.linear.z = z*speed
+			twist.twist.angular.x = 0.0
+			twist.twist.angular.y = 0.0
+			twist.twist.angular.z = th*turn
 			pub.publish(twist)
-
 	except:
 		print(e)
-
 	finally:
-		# twist = Twist()
 		twist = TwistStamped()
-		twist.linear.x = 0.0; twist.linear.y = 0.0; twist.linear.z = 0.0
-		twist.angular.x = 0.0; twist.angular.y = 0.0; twist.angular.z = 0.0
+		twist.twist.linear.x = 0.0
+		twist.twist.linear.y = 0.0
+		twist.twist.linear.z = 0.0
+		twist.twist.angular.x = 0.0
+		twist.twist.angular.y = 0.0
+		twist.twist.angular.z = 0.0
 		pub.publish(twist)
 
 		termios.tcsetattr(sys.stdin, termios.TCSADRAIN, settings)
