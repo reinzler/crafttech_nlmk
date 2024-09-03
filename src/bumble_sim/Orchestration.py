@@ -1,6 +1,6 @@
 import rclpy
 from rclpy.node import Node
-from geometry_msgs.msg import TwistStamped
+from geometry_msgs.msg import Twist, TwistStamped
 from std_msgs.msg import String
 
 
@@ -12,15 +12,15 @@ class ModeOrchestrator(Node):
 
         # Приоритеты
         self.priorities = {
-            "manual_rc": 1,
+            "manual_rc": 1,  # Самый высокий приоритет
             "manual_keyboard": 2,
-            "auto": 3
+            "auto": 3  # Самый низкий приоритет
         }
 
         # Подписки на различные источники команд
-        self.keyboard_sub = self.create_subscription(TwistStamped, 'keyboard_cmd_vel', self.cmd_callback, 10)
-        self.rc_sub = self.create_subscription(TwistStamped, 'rc_cmd_vel', self.cmd_callback, 10)
-        self.auto_sub = self.create_subscription(TwistStamped, 'auto_cmd_vel', self.cmd_callback, 10)
+        self.keyboard_sub = self.create_subscription(Twist, 'keyboard_cmd_vel', self.cmd_callback, 10)
+        self.rc_sub = self.create_subscription(Twist, 'rc_cmd_vel', self.cmd_callback, 10)
+        self.auto_sub = self.create_subscription(Twist, 'auto_cmd_vel', self.cmd_callback, 10)
 
         # Подписка на топик смены режимов
         self.mode_sub = self.create_subscription(String, 'mode_change', self.mode_callback, 10)
@@ -54,29 +54,26 @@ class ModeOrchestrator(Node):
             return
 
         # Проверяем приоритет текущей команды и сравниваем с последним источником
-        if self.last_source and self.last_source != source:
-            if self.priorities[source] < self.priorities[self.last_source]:
-                self.last_source = source
-            elif self.priorities[source] == self.priorities[self.last_source]:
-                # Если команды от разных источников с одинаковым приоритетом, останавливаем робота и предупреждаем
-                self.stop_robot()
-                warning_msg = String()
-                warning_msg.data = "Conflicting commands from multiple sources. Robot stopped."
-                self.warning_pub.publish(warning_msg)
-                return
-            else:
-                return
+        if self.last_source is None or self.priorities[source] < self.priorities[self.last_source]:
+            self.last_source = source
+            command_message = TwistStamped()
+            command_message.twist.linear.x = msg.linear.x
+            command_message.twist.linear.y = msg.linear.y
+            command_message.twist.linear.z = msg.linear.z
+            command_message.twist.angular.z = msg.angular.z
+            self.cmd_pub.publish(command_message)
 
-        self.last_source = source
-        self.cmd_pub.publish(msg)
+        elif self.priorities[source] == self.priorities[self.last_source]:
+            # Это условие не нужно, так как приоритеты уникальны
+            return
+        else:
+            return
 
     def stop_robot(self):
-        stop_message = TwistStamped()
+        stop_message = Twist()
         stop_message.twist.linear.x = 0.0
         stop_message.twist.linear.y = 0.0
         stop_message.twist.linear.z = 0.0
-        stop_message.twist.angular.x = 0.0
-        stop_message.twist.angular.y = 0.0
         stop_message.twist.angular.z = 0.0
         self.cmd_pub.publish(stop_message)
 
