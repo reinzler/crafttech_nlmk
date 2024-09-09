@@ -42,6 +42,7 @@ setup(
             'offboard_sim_control = bumble_sim.offboard_sim_control:main',
             'offboard_control = bumble_sim.offboard_control:main',
             # 'visualizer = bumble_sim.visualizer:main',
+            'math = bumble_sim.maths:main',
             'velocity_control = bumble_sim.velocity_control:main',
             'control = bumble_sim.control:main',
             'processes = bumble_sim.processes:main'

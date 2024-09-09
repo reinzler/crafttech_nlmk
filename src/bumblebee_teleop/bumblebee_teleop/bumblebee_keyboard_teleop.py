@@ -3,6 +3,7 @@ import rclpy
 from rclpy.qos import QoSProfile, ReliabilityPolicy, HistoryPolicy, DurabilityPolicy
 from geometry_msgs.msg import Twist, TwistStamped
 import sys, select, termios, tty
+import time
 
 settings = termios.tcgetattr(sys.stdin)
 
@@ -110,6 +111,7 @@ def main(args=None):
                     break
 
             twist = TwistStamped()
+            twist.header.stamp.sec = int(time.time())
             twist.twist.linear.x = x * speed
             twist.twist.linear.y = y * speed
             twist.twist.linear.z = z * speed
@@ -123,6 +125,7 @@ def main(args=None):
 
     finally:
         twist = TwistStamped()
+        twist.header.stamp.sec = int(time.time())
         twist.twist.linear.x = 0.0
         twist.twist.linear.y = 0.0
         twist.twist.linear.z = 0.0
