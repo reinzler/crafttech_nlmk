@@ -111,6 +111,10 @@ def main(args=None):
                     break
 
             twist = TwistStamped()
+            current_time = time.time()
+            # Разделяем на секунды и наносекунды
+            twist.header.stamp.sec = int(current_time)  # Секунды
+            twist.header.stamp.nanosec = int((current_time - twist.header.stamp.sec) * 1e9)  # Наносекунды
             twist.header.stamp.sec = int(time.time())
             twist.twist.linear.x = x * speed
             twist.twist.linear.y = y * speed
@@ -125,7 +129,10 @@ def main(args=None):
 
     finally:
         twist = TwistStamped()
-        twist.header.stamp.sec = int(time.time())
+        current_time = time.time()
+        # Разделяем на секунды и наносекунды
+        twist.header.stamp.sec = int(current_time)  # Секунды
+        twist.header.stamp.nanosec = int((current_time - twist.header.stamp.sec) * 1e9)  # Наносекунды
         twist.twist.linear.x = 0.0
         twist.twist.linear.y = 0.0
         twist.twist.linear.z = 0.0
