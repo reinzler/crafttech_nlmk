@@ -101,6 +101,7 @@ from colorama import Fore
 class MathNode(Node):
     def __init__(self):
         super().__init__('math_node')
+        self.velocity_left, self.velocity_right, self.theta  = 0.0, 0.0, 0.0
         self.prev_time = None  # Предыдущее время для вычисления delta_t
         self.time_list = []
         self.velocity = 0.0
@@ -160,7 +161,7 @@ class MathNode(Node):
 
                 # Если скорость ненулевая, обновляем координаты
                 if self.velocity != 0 or self.angular_velocity != 0:
-                    self.get_logger().info(f"{Fore.GREEN}delta_t: {delta_t}{Fore.RESET}")
+                    # self.get_logger().info(f"{Fore.GREEN}delta_t: {delta_t}{Fore.RESET}")
 
                     # Используем относительное время
                     self.x += self.velocity * delta_t * np.cos(self.theta[-1])
