@@ -5,20 +5,23 @@
 #include <rclc/rclc.h>
 #include <rclc/executor.h>
 
-#include <std_msgs/msg/int32.h>
+#include <std_msgs/msg/float32_multi_array.h>
+#include <std_msgs/msg/string.h>
 
 #if !defined(MICRO_ROS_TRANSPORT_ARDUINO_SERIAL)
-#error This example is only avaliable for Arduino framework with serial transport.
+#error This example is only available for Arduino framework with serial transport.
 #endif
 
 rcl_publisher_t publisher;
-std_msgs__msg__Int32 msg;
+std_msgs__msg__String pub_msg;
+
+rcl_subscription_t subscriber;
+std_msgs__msg__Float32MultiArray sub_msg;
 
 rclc_executor_t executor;
 rclc_support_t support;
 rcl_allocator_t allocator;
 rcl_node_t node;
-rcl_timer_t timer;
 
 #define RCCHECK(fn) { rcl_ret_t temp_rc = fn; if((temp_rc != RCL_RET_OK)){error_loop();}}
 #define RCSOFTCHECK(fn) { rcl_ret_t temp_rc = fn; if((temp_rc != RCL_RET_OK)){}}
@@ -30,12 +33,20 @@ void error_loop() {
   }
 }
 
-void timer_callback(rcl_timer_t * timer, int64_t last_call_time) {
-  RCLC_UNUSED(last_call_time);
-  if (timer != NULL) {
-    RCSOFTCHECK(rcl_publish(&publisher, &msg, NULL));
-    msg.data++;
-  }
+void subscription_callback(const void * msgin) {
+  const std_msgs__msg__Float32MultiArray * received_msg = (const std_msgs__msg__Float32MultiArray *)msgin;
+
+  // Преобразуем полученные данные в строку
+  char buffer[100];
+  snprintf(buffer, sizeof(buffer), "Received: %f, %f, %f", received_msg->data.data[0], received_msg->data.data[1], received_msg->data.data[2]);
+
+  // Копируем строку в сообщение для публикации
+  pub_msg.data.data = buffer;
+  pub_msg.data.size = strlen(buffer);
+  pub_msg.data.capacity = pub_msg.data.size + 1;
+
+  // Публикуем сообщение
+  RCSOFTCHECK(rcl_publish(&publisher, &pub_msg, NULL));
 }
 
 void setup() {
@@ -56,22 +67,24 @@ void setup() {
   RCCHECK(rclc_publisher_init_default(
     &publisher,
     &node,
-    ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Int32),
+    ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, String),
     "micro_ros_platformio_node_publisher"));
 
-  // create timer,
-  const unsigned int timer_timeout = 1000;
-  RCCHECK(rclc_timer_init_default(
-    &timer,
-    &support,
-    RCL_MS_TO_NS(timer_timeout),
-    timer_callback));
+  // create subscriber
+  RCCHECK(rclc_subscription_init_default(
+    &subscriber,
+    &node,
+    ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Float32MultiArray),
+    "micro_ros_platformio_node_subscriber"));
 
   // create executor
   RCCHECK(rclc_executor_init(&executor, &support.context, 1, &allocator));
-  RCCHECK(rclc_executor_add_timer(&executor, &timer));
+  RCCHECK(rclc_executor_add_subscription(&executor, &subscriber, &sub_msg, &subscription_callback, ON_NEW_DATA));
 
-  msg.data = 0;
+  // Initialize pub_msg
+  pub_msg.data.data = (char *)malloc(1);
+  pub_msg.data.size = 0;
+  pub_msg.data.capacity = 1;
 }
 
 void loop() {
