@@ -1,17 +1,15 @@
 #include <Arduino.h>
 #include <micro_ros_platformio.h>
-
 #include <rcl/rcl.h>
 #include <rcl/error_handling.h>
 #include <rclc/rclc.h>
 #include <rclc/executor.h>
+#include <std_msgs/msg/int32.h>
+#include <IBusBM.h>  // Добавляем библиотеку IBusBM
 
 #if !defined(MICRO_ROS_TRANSPORT_ARDUINO_SERIAL)
 #error This example is only available for Arduino framework with serial transport.
 #endif
-
-#include <std_msgs/msg/int32.h>
-#include <std_msgs/msg/float32_multi_array.h>
 
 // Node and communication handles
 rcl_node_t node;
@@ -33,6 +31,8 @@ std_msgs__msg__Int32 msg_subscriber;
 rcl_timer_t timer;
 rclc_executor_t executor_pub_rc;
 rclc_executor_t executor_sub;
+
+IBusBM IBus; // IBus object для чтения данных
 
 #define RCCHECK(fn)              \
   {                              \
@@ -89,12 +89,24 @@ void timer_callback(rcl_timer_t *timer, int64_t last_call_time)
   RCLC_UNUSED(last_call_time);
   if (timer != NULL)
   {
-    // Publish a fixed value for RC input
-    msg_rc.data = 123; // Example value
+    // Чтение данных с канала 1 iBus
+    int rc_value = IBus.readChannel(1);
+
+    // Если данные с iBus корректные (не 0), публикуем их. Иначе публикуем 1
+    if (rc_value != 0)
+    {
+      msg_rc.data = rc_value;
+    }
+    else
+    {
+      msg_rc.data = 1; // Если данных нет, публикуем 1
+    }
+
     RCSOFTCHECK(rcl_publish(&rc_publisher, &msg_rc, NULL));
 
     // Debug output to Serial
-    Serial.println("RC published: 123");
+    Serial.print("RC channel 1: ");
+    Serial.println(msg_rc.data);
   }
 }
 
@@ -107,6 +119,11 @@ void setup()
 
   set_microros_serial_transports(Serial);
   delay(2000);
+
+  // Инициализация iBus
+  IBus.begin(Serial2, 1); // Подключаем iBus к Serial2 и используем таймер 1
+
+  Serial.println("Start IBus2PWM_ESP32");
 
   // Initialize allocator and support
   allocator = rcl_get_default_allocator();
@@ -166,6 +183,11 @@ void loop()
 
   // Spin the RC publisher executor (triggered by timer)
   RCSOFTCHECK(rclc_executor_spin_some(&executor_pub_rc, RCL_MS_TO_NS(100)));
+
+  // Чтение данных iBus для вывода на монитор
+  Serial.print(IBus.readChannel(1)); // Отображение значений канала 1
+  Serial.print("   ");
+  Serial.println(IBus.readChannel(2)); // Отображение значений канала 2
 
   delay(100);
 }
