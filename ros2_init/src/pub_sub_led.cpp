@@ -43,6 +43,9 @@ rclc_executor_t executor_sub;
     }                            \
   }
 
+#define LED_PIN LED_BUILTIN
+
+
 void error_loop()
 {
   while (1)
@@ -76,6 +79,9 @@ void setup()
 {
   // Initialize serial communication
   Serial.begin(115200);
+  pinMode(LED_PIN, OUTPUT);
+  digitalWrite(LED_PIN, LOW);  // Это выключит диод после старта программы
+
   set_microros_serial_transports(Serial);
 
   delay(2000);
