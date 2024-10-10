@@ -1,15 +1,17 @@
 #include <Arduino.h>
 #include <micro_ros_platformio.h>
+
 #include <rcl/rcl.h>
 #include <rcl/error_handling.h>
 #include <rclc/rclc.h>
 #include <rclc/executor.h>
-#include <std_msgs/msg/int32.h>
-#include <IBusBM.h>  // Добавляем библиотеку IBusBM
 
 #if !defined(MICRO_ROS_TRANSPORT_ARDUINO_SERIAL)
 #error This example is only available for Arduino framework with serial transport.
 #endif
+
+#include <std_msgs/msg/int32.h>
+#include <std_msgs/msg/float32_multi_array.h>
 
 // Node and communication handles
 rcl_node_t node;
@@ -25,14 +27,12 @@ std_msgs__msg__Int32 msg_rc;
 
 // Subscriber and message type
 rcl_subscription_t subscriber;
-std_msgs__msg__Int32 msg_subscriber;
+std_msgs__msg__Float32MultiArray msg_subscriber; // Для подписки на Float32MultiArray
 
 // Timer and executor for timed RC publisher
 rcl_timer_t timer;
 rclc_executor_t executor_pub_rc;
 rclc_executor_t executor_sub;
-
-IBusBM IBus; // IBus object для чтения данных
 
 #define RCCHECK(fn)              \
   {                              \
@@ -58,7 +58,7 @@ void error_loop()
 {
   while (1)
   {
-    delay(100);
+    delay(10);
   }
 }
 
@@ -70,15 +70,23 @@ void error_loop()
  */
 void subscription_callback(const void *msgin)
 {
-  const std_msgs__msg__Int32 *msg_subscriber = (const std_msgs__msg__Int32 *)msgin;
+  const std_msgs__msg__Float32MultiArray *msg_subscriber = (const std_msgs__msg__Float32MultiArray *)msgin;
 
-  // Publish a fixed value for encoders
-  msg_encoders.data = 313; // Example value
-  RCSOFTCHECK(rcl_publish(&encoders_publisher, &msg_encoders, NULL));
+  // Берем первый элемент из полученного сообщения и преобразуем его в int
+  if (msg_subscriber->data.size > 0) {
+    msg_encoders.data = (int32_t)msg_subscriber->data.data[0];
 
-  // Debug output to Serial
-  Serial.print("Received cmd_velocities: ");
-  Serial.println(" | Encoders published: 313");
+    // Публикуем значение
+    RCSOFTCHECK(rcl_publish(&encoders_publisher, &msg_encoders, NULL));
+
+    // Отладочный вывод в Serial
+    Serial.print("Received cmd_velocities: ");
+    Serial.print(msg_subscriber->data.data[0]);
+    Serial.print(" | Encoders published: ");
+    Serial.println(msg_encoders.data);
+  } else {
+    Serial.println("Received cmd_velocities, but no data available.");
+  }
 }
 
 /**
@@ -89,24 +97,12 @@ void timer_callback(rcl_timer_t *timer, int64_t last_call_time)
   RCLC_UNUSED(last_call_time);
   if (timer != NULL)
   {
-    // Чтение данных с канала 1 iBus
-    int rc_value = IBus.readChannel(1);
-
-    // Если данные с iBus корректные (не 0), публикуем их. Иначе публикуем 1
-    if (rc_value != 0)
-    {
-      msg_rc.data = rc_value;
-    }
-    else
-    {
-      msg_rc.data = 1; // Если данных нет, публикуем 1
-    }
-
+    // Publish a fixed value for RC input
+    msg_rc.data = 123; // Example value
     RCSOFTCHECK(rcl_publish(&rc_publisher, &msg_rc, NULL));
 
     // Debug output to Serial
-    Serial.print("RC channel 1: ");
-    Serial.println(msg_rc.data);
+    Serial.println("RC published: 123");
   }
 }
 
@@ -119,11 +115,6 @@ void setup()
 
   set_microros_serial_transports(Serial);
   delay(2000);
-
-  // Инициализация iBus
-  IBus.begin(Serial2, 1); // Подключаем iBus к Serial2 и используем таймер 1
-
-  Serial.println("Start IBus2PWM_ESP32");
 
   // Initialize allocator and support
   allocator = rcl_get_default_allocator();
@@ -146,12 +137,23 @@ void setup()
       ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Int32),
       "rc_output"));
 
+  // Установка QoS-профиля для подписчика
+  rmw_qos_profile_t qos_profile = rmw_qos_profile_default;
+  qos_profile.reliability = RMW_QOS_POLICY_RELIABILITY_RELIABLE;
+  qos_profile.durability = RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL;
+
   // Initialize subscriber for cmd_velocities
-  RCCHECK(rclc_subscription_init_default(
+  RCCHECK(rclc_subscription_init(
       &subscriber,
       &node,
-      ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Int32),
-      "cmd_velocities"));
+      ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Float32MultiArray),
+      "cmd_velocities",
+      &qos_profile));
+
+  // Инициализация данных сообщения для подписчика (инициализируем массив)
+  msg_subscriber.data.data = (float *)malloc(sizeof(float) * 4); // Инициализируем массив на 4 элемента
+  msg_subscriber.data.size = 4;
+  msg_subscriber.data.capacity = 4;
 
   // Initialize timer for RC publisher, with a period of 1000 ms
   const unsigned int timer_timeout = 1000; // 1 second interval
@@ -183,11 +185,6 @@ void loop()
 
   // Spin the RC publisher executor (triggered by timer)
   RCSOFTCHECK(rclc_executor_spin_some(&executor_pub_rc, RCL_MS_TO_NS(100)));
-
-  // Чтение данных iBus для вывода на монитор
-  Serial.print(IBus.readChannel(1)); // Отображение значений канала 1
-  Serial.print("   ");
-  Serial.println(IBus.readChannel(2)); // Отображение значений канала 2
 
   delay(100);
 }
