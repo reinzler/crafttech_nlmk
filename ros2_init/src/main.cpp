@@ -10,6 +10,7 @@
 #error This example is only available for Arduino framework with serial transport.
 #endif
 
+#include <std_msgs/msg/float32.h> // Изменили на Float32
 #include <std_msgs/msg/int32.h>
 #include <std_msgs/msg/float32_multi_array.h>
 
@@ -20,14 +21,14 @@ rcl_allocator_t allocator;
 
 // Publishers and message types
 rcl_publisher_t encoders_publisher; // Publisher triggered by subscriber callback
-std_msgs__msg__Int32 msg_encoders;
+std_msgs__msg__Float32 msg_encoders; // Тип сообщения изменён на Float32
 
 rcl_publisher_t rc_publisher;       // Publisher triggered by timer
-std_msgs__msg__Int32 msg_rc;
+std_msgs__msg__Int32 msg_rc;        // Оставляем как Int32
 
 // Subscriber and message type
 rcl_subscription_t subscriber;
-std_msgs__msg__Float32MultiArray msg_subscriber; // Для подписки на Float32MultiArray
+std_msgs__msg__Float32MultiArray msg_subscriber;
 
 // Timer and executor for timed RC publisher
 rcl_timer_t timer;
@@ -64,7 +65,7 @@ void error_loop()
 
 /**
  * @brief Subscription callback executed at receiving a message.
- * This publishes a message with encoders data.
+ * This publishes a message with encoders data as Float32.
  *
  * @param msgin Pointer to incoming message.
  */
@@ -72,21 +73,17 @@ void subscription_callback(const void *msgin)
 {
   const std_msgs__msg__Float32MultiArray *msg_subscriber = (const std_msgs__msg__Float32MultiArray *)msgin;
 
-  // Берем первый элемент из полученного сообщения и преобразуем его в int
-  if (msg_subscriber->data.size > 0) {
-    msg_encoders.data = (int32_t)msg_subscriber->data.data[0];
+  // Берём первый элемент из полученного сообщения и преобразуем его в float
+  msg_encoders.data = msg_subscriber->data.data[0];
 
-    // Публикуем значение
-    RCSOFTCHECK(rcl_publish(&encoders_publisher, &msg_encoders, NULL));
+  // Публикуем значение
+  RCSOFTCHECK(rcl_publish(&encoders_publisher, &msg_encoders, NULL));
 
-    // Отладочный вывод в Serial
-    Serial.print("Received cmd_velocities: ");
-    Serial.print(msg_subscriber->data.data[0]);
-    Serial.print(" | Encoders published: ");
-    Serial.println(msg_encoders.data);
-  } else {
-    Serial.println("Received cmd_velocities, but no data available.");
-  }
+  // Отладочный вывод в Serial
+  Serial.print("Received cmd_velocities: ");
+  Serial.print(msg_subscriber->data.data[0]);
+  Serial.print(" | Encoders published: ");
+  Serial.println(msg_encoders.data);
 }
 
 /**
@@ -127,7 +124,7 @@ void setup()
   RCCHECK(rclc_publisher_init_default(
       &encoders_publisher,
       &node,
-      ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Int32),
+      ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Float32), // Изменяем на Float32
       "encoders_output"));
 
   // Initialize RC publisher (triggered by timer)
@@ -150,11 +147,6 @@ void setup()
       "cmd_velocities",
       &qos_profile));
 
-  // Инициализация данных сообщения для подписчика (инициализируем массив)
-  msg_subscriber.data.data = (float *)malloc(sizeof(float) * 4); // Инициализируем массив на 4 элемента
-  msg_subscriber.data.size = 4;
-  msg_subscriber.data.capacity = 4;
-
   // Initialize timer for RC publisher, with a period of 1000 ms
   const unsigned int timer_timeout = 1000; // 1 second interval
   RCCHECK(rclc_timer_init_default(
@@ -174,8 +166,13 @@ void setup()
   RCCHECK(rclc_executor_add_timer(&executor_pub_rc, &timer));
 
   // Initialize message data for both publishers
-  msg_encoders.data = 0;
-  msg_rc.data = 0;
+  msg_encoders.data = 0.0f; // Float32 initialization
+  msg_rc.data = 0;          // Int32 initialization
+
+  // Initialize subscriber message
+  msg_subscriber.data.data = (float *)malloc(sizeof(float) * 4); // Initialize array for 4 elements
+  msg_subscriber.data.size = 4;
+  msg_subscriber.data.capacity = 4;
 }
 
 void loop()
