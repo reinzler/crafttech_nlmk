@@ -14,6 +14,8 @@
 #include <std_msgs/msg/int32.h>
 #include <std_msgs/msg/float32_multi_array.h>
 
+#include <IBusBM.h>
+
 // Node and communication handles
 rcl_node_t node;
 rclc_support_t support;
@@ -21,10 +23,10 @@ rcl_allocator_t allocator;
 
 // Publishers and message types
 rcl_publisher_t encoders_publisher; // Publisher triggered by subscriber callback
-std_msgs__msg__Float32 msg_encoders; // Тип сообщения изменён на Float32
+std_msgs__msg__Float32 msg_encoders; //
 
 rcl_publisher_t rc_publisher;       // Publisher triggered by timer
-std_msgs__msg__Int32 msg_rc;        // Оставляем как Int32
+std_msgs__msg__Int32 msg_rc;        //
 
 // Subscriber and message type
 rcl_subscription_t subscriber;
@@ -34,6 +36,8 @@ std_msgs__msg__Float32MultiArray msg_subscriber;
 rcl_timer_t timer;
 rclc_executor_t executor_pub_rc;
 rclc_executor_t executor_sub;
+
+IBusBM IBus;
 
 #define RCCHECK(fn)              \
   {                              \
@@ -69,6 +73,7 @@ void error_loop()
  *
  * @param msgin Pointer to incoming message.
  */
+
 void subscription_callback(const void *msgin)
 {
   const std_msgs__msg__Float32MultiArray *msg_subscriber = (const std_msgs__msg__Float32MultiArray *)msgin;
@@ -87,19 +92,33 @@ void subscription_callback(const void *msgin)
 }
 
 /**
- * @brief Timer callback for RC publisher. Publishes RC data at intervals.
+ * Timer callback for RC publisher. Publishes RC data at intervals.
  */
+
+
 void timer_callback(rcl_timer_t *timer, int64_t last_call_time)
 {
   RCLC_UNUSED(last_call_time);
   if (timer != NULL)
   {
-    // Publish a fixed value for RC input
-    msg_rc.data = 123; // Example value
+    // Чтение данных с канала 1 iBus
+    int rc_value = IBus.readChannel(1);
+
+    // Если данные с iBus корректные (не 0), публикуем их. Иначе публикуем 1
+    if (rc_value != 0)
+    {
+      msg_rc.data = rc_value;
+    }
+    else
+    {
+      msg_rc.data = 1; // Если данных нет, публикуем 1
+    }
+
     RCSOFTCHECK(rcl_publish(&rc_publisher, &msg_rc, NULL));
 
     // Debug output to Serial
-    Serial.println("RC published: 123");
+    Serial.print("RC channel 1: ");
+    Serial.println(msg_rc.data);
   }
 }
 
