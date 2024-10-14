@@ -1,28 +1,43 @@
 from launch import LaunchDescription
-from launch_ros.actions import Node
-from launch.actions import ExecuteProcess, IncludeLaunchDescription
+from launch.actions import DeclareLaunchArgument, RegisterEventHandler, IncludeLaunchDescription, ExecuteProcess
+from launch.substitutions import Command, FindExecutable, PathJoinSubstitution, LaunchConfiguration
 from launch.launch_description_sources import PythonLaunchDescriptionSource
-from launch.substitutions import LaunchConfiguration
 from ament_index_python.packages import get_package_share_directory
+from launch_ros.actions import Node
 import os
-import subprocess
 
-# List of commands to run
-commands = [
-    # Run the MicroROS - ROS2 Bridge
-    "ros2 run micro_ros_agent micro_ros_agent serial --dev /dev/ttyACM0 -b 115200",
-]
-
-# Loop through each command in the list
-
-for command in commands:
-    # Each command is run in a new tab of the gnome-terminal
-    subprocess.run(["gnome-terminal", "--tab", "--", "bash", "-c", command + "; exec bash"])
-
-    # Pause between each command
 
 def generate_launch_description():
+    # Declare the arguments for the launch
+    declared_arguments = [
+        DeclareLaunchArgument(
+            "gui",
+            default_value="true",
+            description="Start RViz2 automatically with this launch file.",
+        ),
+        DeclareLaunchArgument(
+            "use_mock_hardware",
+            default_value="false",
+            description="Start robot with mock hardware mirroring command to its states.",
+        )
+    ]
 
+    # Include the diffbot launch file
+    diffbot_launch_path = os.path.join(
+        get_package_share_directory('ros2_control_demo_example_2'),
+        'launch',
+        'diffbot.launch.py'
+    )
+
+    diffbot_launch = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(diffbot_launch_path),
+        launch_arguments={
+            'gui': LaunchConfiguration('gui'),
+            'use_mock_hardware': LaunchConfiguration('use_mock_hardware'),
+        }.items(),
+    )
+
+    # Node maths from bumble_sim package
     maths = Node(
         package='bumble_sim',
         executable='math',
@@ -30,23 +45,15 @@ def generate_launch_description():
         output='screen'
     )
 
-    # Запуск ноды Телеоперации с клавиатуры в отдельном терминале
+    # Open a new terminal tab for keyboard_teleop node
     keyboard_teleop_terminal = ExecuteProcess(
-        cmd=['gnome-terminal', '--', 'ros2', 'run', 'bumblebee_teleop', 'bumblebee_keyboard_teleop'],
+        cmd=['gnome-terminal', '--tab', '--', 'ros2', 'run', 'bumblebee_teleop', 'bumblebee_keyboard_teleop'],
         output='screen'
     )
 
-    rviz2_diffbot_path = os.path.join(
-        get_package_share_directory('ros2_control_demo_example_2'),
-        'launch',
-        'diffbot.launch.py'
-    )
+    # Return the launch description with the diffbot launch, maths node, and teleop terminal
+    return LaunchDescription(declared_arguments + [diffbot_launch, maths, keyboard_teleop_terminal])
 
-    # Запуск другого лаунч файла
-    rviz2_diffbot_node = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource(rviz2_diffbot_path),
-        launch_arguments={'gui': LaunchConfiguration('gui'), 'use_mock_hardware': LaunchConfiguration('use_mock_hardware')}.items(),
-    )
 
-    # return LaunchDescription([maths, keyboard_teleop_terminal, rviz2_diffbot_node])
-    return LaunchDescription([maths, keyboard_teleop_terminal])
+
+
